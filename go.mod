@@ -1,4 +1,4 @@
-module github.com/mariogmarq/GoShare
+module github.com/mariogmarq/goshare
 
 go 1.15
 

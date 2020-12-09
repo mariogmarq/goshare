@@ -30,6 +30,9 @@ func send(cmd *cobra.Command, args []string) {
 	fmt.Printf("Code for share: %s\n", randomString)
 	var files filesToSend = args
 
+	//Establish gin to Release mode
+	gin.SetMode(gin.ReleaseMode)
+
 	//Create http to listen to port
 	g := gin.Default()
 	g.MaxMultipartMemory = 8 << 20 //8MB
