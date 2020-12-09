@@ -3,6 +3,7 @@ package cmd
 import (
 	"io"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"os"
@@ -29,16 +30,9 @@ func get(cmd *cobra.Command, args []string) {
 
 	//For every ip in your network
 	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
-		req, err := client.Get("http://" + ip.String() + ":8080/" + args[0])
+		resp, err := client.Get("http://" + ip.String() + ":8080/" + args[0])
 		if err == nil {
-			defer req.Body.Close()
-			file, err := os.Create(args[0])
-			if err != nil {
-				panic(err.Error())
-			}
-
-			io.Copy(file, req.Body)
-
+			DownloadFile(resp)
 			break
 		}
 	}
@@ -51,4 +45,22 @@ func inc(ip net.IP) {
 			break
 		}
 	}
+}
+
+func DownloadFile(resp *http.Response) {
+	defer resp.Body.Close()
+
+	//Get the filename
+	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
+	if err != nil {
+		panic(err)
+	}
+
+	file, err := os.Create(params["filename"])
+	if err != nil {
+		panic(err.Error())
+	}
+
+	io.Copy(file, resp.Body)
+
 }
