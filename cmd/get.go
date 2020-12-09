@@ -22,11 +22,15 @@ func get(cmd *cobra.Command, args []string) {
 	//Search ip
 	ip, err := util.ScanNetwork(":8080")
 	if err == nil {
-		resp, err := http.Get("http://" + ip + ":8080" + "/" + args[0])
+		resp, err := http.Get("http://" + ip + ":8080" + "/get/" + args[0])
 		if err != nil {
 			panic(err)
 		}
 		DownloadFile(resp)
+
+		//Shutdown the server
+		http.Get("http://" + ip + ":8080" + "/stop")
+
 	}
 }
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -35,9 +34,11 @@ func send(cmd *cobra.Command, args []string) {
 
 	//Create http to listen to port
 	g := gin.New()
+	g.Use(gin.Recovery())
 	g.MaxMultipartMemory = 8 << 20 //8MB
-	g.GET("/:code", files.sendHttpHandler)
+	g.GET("/get/:code", files.sendHttpHandler)
 	g.GET("/", pingHandler)
+	g.GET("/stop", stopHandler)
 	g.Run()
 }
 
@@ -61,19 +62,24 @@ func (f filesToSend) sendHttpHandler(c *gin.Context) {
 	if c.Param("code") == randomString {
 
 		// Set Headers and print connection
-		log.Printf("Got connection with %s\n", c.Request.RemoteAddr)
+		fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
 
 		for _, filename := range f {
+			fmt.Println("Sending " + filename)
 			//Establish the file name
 			parsedFilename := strings.Split(filename, "/")
 			//Send files
 			c.FileAttachment(filename, parsedFilename[len(parsedFilename)-1])
 		}
-		os.Exit(0)
 	}
 }
 
 //Root handler, just for ping
 func pingHandler(c *gin.Context) {
 	c.Header("status", "200")
+}
+
+//Stop handler for stop executing
+func stopHandler(c *gin.Context) {
+	os.Exit(0)
 }
