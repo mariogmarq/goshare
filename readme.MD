@@ -1,8 +1,9 @@
 # GoShare
 
-GoShare allows you to share files in your local network with ease from your command line.
+GoShare allows you to share files in your local network easely from your command line.
 
-Built with Cobra, *GoShare stays to the KISS philosophy* which will maintain during his whole life. 
+Built with Cobra and Gin, Goshare aims to be a program that can be integrated in your
+day a day workflow.
 
 # Usage 
 ![send gif](resources/send.gif)
