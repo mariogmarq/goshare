@@ -2,18 +2,15 @@ package cmd
 
 import (
 	"fmt"
-	"io"
+	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
-
-var randomString string
-var sendQuit chan bool
 
 type filesToSend []string
 
@@ -26,13 +23,16 @@ var sendCmd = &cobra.Command{
 }
 
 func send(cmd *cobra.Command, args []string) {
-	randomString = createRandomString()
-	fmt.Println("Code for share: " + randomString)
+
+	randomString := createRandomString()
+	fmt.Printf("Code for share: %s\n", randomString)
 	var files filesToSend = args
 
 	//Create http to listen to port
-	http.HandleFunc("/", files.sendHandler)
-	http.ListenAndServe(":8080", nil)
+	g := gin.Default()
+	g.GET("/", files.sendHttpHandler)
+	fmt.Println("Hi")
+	g.Run()
 }
 
 //Create a random string meant to be used in the send command
@@ -50,25 +50,18 @@ func createRandomString() string {
 	return output.String()
 }
 
-//handler for the send
-func (f filesToSend) sendHandler(w http.ResponseWriter, req *http.Request) {
+//Handler function for send
+func (f filesToSend) sendHttpHandler(c *gin.Context) {
 
-	//Wait for the request
-	if req.Method == "GET" && req.URL.RawQuery == randomString {
-		w.WriteHeader(200)
-		fmt.Println("Got connection with " + string(req.RemoteAddr))
+	// Set Headers and print connection
+	c.Header("status", "200")
+	log.Printf("Got connection with %s\n", c.Request.RemoteAddr)
 
-		for _, filename := range f {
-			fmt.Println("Sending " + filename)
-			file, err := os.Open(filename)
-
-			if err != nil {
-				fmt.Println("Error sending " + filename)
-				continue
-			}
-
-			io.Copy(w, file)
-		}
-		os.Exit(0)
+	for _, filename := range f {
+		//Establish the file name
+		parsedFilename := strings.Split(filename, "/")
+		//Send files
+		c.FileAttachment(filename, parsedFilename[len(parsedFilename)-1])
 	}
+	os.Exit(0)
 }
