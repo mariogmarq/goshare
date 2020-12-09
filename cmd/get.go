@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"io"
-	"log"
 	"mime"
-	"net"
 	"net/http"
 	"os"
-	"time"
 
+	"github.com/mariogmarq/goshare/util"
 	"github.com/spf13/cobra"
 )
 
@@ -21,29 +19,14 @@ var getCmd = &cobra.Command{
 }
 
 func get(cmd *cobra.Command, args []string) {
-	client := http.Client{Timeout: 10 * time.Millisecond}
-
-	ip, ipnet, err := net.ParseCIDR("192.168.1.0/24")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//For every ip in your network
-	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
-		resp, err := client.Get("http://" + ip.String() + ":8080/" + args[0])
-		if err == nil {
-			DownloadFile(resp)
-			break
+	//Search ip
+	ip, err := util.ScanNetwork(":8080")
+	if err == nil {
+		resp, err := http.Get("http://" + ip + ":8080" + "/" + args[0])
+		if err != nil {
+			panic(err)
 		}
-	}
-}
-
-func inc(ip net.IP) {
-	for j := len(ip) - 1; j >= 0; j-- {
-		ip[j]++
-		if ip[j] > 0 {
-			break
-		}
+		DownloadFile(resp)
 	}
 }
 

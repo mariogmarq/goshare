@@ -34,9 +34,10 @@ func send(cmd *cobra.Command, args []string) {
 	gin.SetMode(gin.ReleaseMode)
 
 	//Create http to listen to port
-	g := gin.Default()
+	g := gin.New()
 	g.MaxMultipartMemory = 8 << 20 //8MB
 	g.GET("/:code", files.sendHttpHandler)
+	g.GET("/", pingHandler)
 	g.Run()
 }
 
@@ -70,4 +71,9 @@ func (f filesToSend) sendHttpHandler(c *gin.Context) {
 		}
 		os.Exit(0)
 	}
+}
+
+//Root handler, just for ping
+func pingHandler(c *gin.Context) {
+	c.Header("status", "200")
 }
