@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var randomString string
+
 type filesToSend []string
 
 var sendCmd = &cobra.Command{
@@ -24,14 +26,14 @@ var sendCmd = &cobra.Command{
 
 func send(cmd *cobra.Command, args []string) {
 
-	randomString := createRandomString()
+	randomString = createRandomString()
 	fmt.Printf("Code for share: %s\n", randomString)
 	var files filesToSend = args
 
 	//Create http to listen to port
 	g := gin.Default()
-	g.GET("/", files.sendHttpHandler)
-	fmt.Println("Hi")
+	g.MaxMultipartMemory = 8 << 20 //8MB
+	g.GET("/:code", files.sendHttpHandler)
 	g.Run()
 }
 
@@ -52,16 +54,17 @@ func createRandomString() string {
 
 //Handler function for send
 func (f filesToSend) sendHttpHandler(c *gin.Context) {
+	if c.Param("code") == randomString {
 
-	// Set Headers and print connection
-	c.Header("status", "200")
-	log.Printf("Got connection with %s\n", c.Request.RemoteAddr)
+		// Set Headers and print connection
+		log.Printf("Got connection with %s\n", c.Request.RemoteAddr)
 
-	for _, filename := range f {
-		//Establish the file name
-		parsedFilename := strings.Split(filename, "/")
-		//Send files
-		c.FileAttachment(filename, parsedFilename[len(parsedFilename)-1])
+		for _, filename := range f {
+			//Establish the file name
+			parsedFilename := strings.Split(filename, "/")
+			//Send files
+			c.FileAttachment(filename, parsedFilename[len(parsedFilename)-1])
+		}
+		os.Exit(0)
 	}
-	os.Exit(0)
 }

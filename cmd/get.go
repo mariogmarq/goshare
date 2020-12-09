@@ -29,7 +29,7 @@ func get(cmd *cobra.Command, args []string) {
 
 	//For every ip in your network
 	for ip := ip.Mask(ipnet.Mask); ipnet.Contains(ip); inc(ip) {
-		req, err := client.Get("http://" + ip.String() + ":8080?" + args[0])
+		req, err := client.Get("http://" + ip.String() + ":8080/" + args[0])
 		if err == nil {
 			defer req.Body.Close()
 			file, err := os.Create(args[0])
