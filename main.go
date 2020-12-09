@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/mariogmarq/GoShare/cmd"
+import "github.com/mariogmarq/goshare/cmd"
 
 func main() {
 	cmd.Execute()
