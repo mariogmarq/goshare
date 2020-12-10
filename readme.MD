@@ -13,4 +13,4 @@ day a day workflow.
 - [x] Minimum work
 - [ ] Capable of send various files
 - [ ] Testing
-- [ ] Encryption
+- [x] Encryption

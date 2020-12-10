@@ -2,18 +2,21 @@ package cmd
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/mariogmarq/goshare/encryption"
+	"github.com/mariogmarq/goshare/util"
 	"github.com/spf13/cobra"
 )
 
-var randomString string
+var (
+	randomString  string
+	encryptedData []byte
+)
 
-type filesToSend []string
+type key []byte
 
 var sendCmd = &cobra.Command{
 	Use:   "send [files to send] ",
@@ -24,59 +27,76 @@ var sendCmd = &cobra.Command{
 }
 
 func send(cmd *cobra.Command, args []string) {
+	fmt.Println("Encrypting file")
+	//Generate encryption key
+	k, err := encryption.MakeKey(32)
+	if err != nil {
+		panic(err.Error())
+	}
 
-	randomString = createRandomString()
+	//Load files into memory, verifing they exists(only one file supported)
+	file, err := os.Open(args[0])
+	if err != nil {
+		panic("Error opening file")
+	}
+
+	//Encrypt the file
+	encryptedData, err = encryption.Encrypt(k, file)
+	if err != nil {
+		panic("Error encrypting file")
+	}
+
+	//Once the file is ready, rise the server
+	randomString = util.CreateRandomString(6)
 	fmt.Printf("Code for share: %s\n", randomString)
-	var files filesToSend = args
 
 	//Establish gin to Release mode
 	gin.SetMode(gin.ReleaseMode)
 
+	//generate the getHttpHandler
+	getHandler := getSendHttpHandler(args[0])
+
 	//Create http to listen to port
 	g := gin.New()
-	g.Use(gin.Recovery())
 	g.MaxMultipartMemory = 8 << 20 //8MB
-	g.GET("/get/:code", files.sendHttpHandler)
+	g.GET("/get/:code", getHandler)
 	g.GET("/", pingHandler)
 	g.GET("/stop", stopHandler)
+	g.GET("/key", key(k).keyHandler)
 	g.Run()
 }
 
-//Create a random string meant to be used in the send command
-func createRandomString() string {
-	rand.Seed(time.Now().Unix())
-	charSet := "abcdedfghijklmnopqrstuvwxyz"
-	var output strings.Builder
-	length := 6
-	for i := 0; i < length; i++ {
-		random := rand.Intn(len(charSet))
-		randomChar := charSet[random]
-		output.WriteString(string(randomChar))
-	}
+//Returns the handler for sending the file, takes name of file has a parameter
+func getSendHttpHandler(filename string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if c.Param("code") == randomString {
+			fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
 
-	return output.String()
-}
-
-//Handler function for send
-func (f filesToSend) sendHttpHandler(c *gin.Context) {
-	if c.Param("code") == randomString {
-
-		// Set Headers and print connection
-		fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
-
-		for _, filename := range f {
 			fmt.Println("Sending " + filename)
 			//Establish the file name
 			parsedFilename := strings.Split(filename, "/")
-			//Send files
-			c.FileAttachment(filename, parsedFilename[len(parsedFilename)-1])
+			//Write header for filename
+			c.Writer.Header().Set("content-disposition",
+				fmt.Sprintf("attachment; filename=\"%s\"",
+					parsedFilename[len(parsedFilename)-1]))
+			//Write the file
+			c.Writer.Write(encryptedData)
+			fmt.Println("File sent!")
 		}
 	}
 }
 
-//Root handler, just for ping
+//Root handler just pings
 func pingHandler(c *gin.Context) {
 	c.Header("status", "200")
+}
+
+//Writes the key into the response
+func (k key) keyHandler(c *gin.Context) {
+	hexkey := fmt.Sprintf("%x", []byte(k))
+	c.JSON(200, gin.H{
+		"key": hexkey,
+	})
 }
 
 //Stop handler for stop executing
