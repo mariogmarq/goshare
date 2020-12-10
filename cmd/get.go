@@ -7,7 +7,9 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/mariogmarq/goshare/encryption"
 	"github.com/mariogmarq/goshare/util"
 	"github.com/spf13/cobra"
@@ -21,10 +23,18 @@ var getCmd = &cobra.Command{
 	Run:   get,
 }
 
+var s *spinner.Spinner
+
 func get(cmd *cobra.Command, args []string) {
+	//Create spinner
+	s = spinner.New(spinner.CharSets[11], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+	s.Suffix = " Searching in network..."
+	s.Start()
+
 	//Search ip
 	ip, err := util.ScanNetwork(":8080")
 	if err == nil {
+		s.Stop()
 		ipHttp := "http://" + ip + ":8080/"
 		//Get the key of encryption
 		key, err := getKey(ipHttp + "key")
@@ -49,6 +59,10 @@ func get(cmd *cobra.Command, args []string) {
 func downloadFile(resp *http.Response, key []byte) {
 	defer resp.Body.Close()
 
+	//Create spinner
+	s.Suffix = " Donwloading and decrypting..."
+	s.Start()
+
 	//Get the filename
 	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
 	if err != nil {
@@ -68,6 +82,7 @@ func downloadFile(resp *http.Response, key []byte) {
 
 	file.Write(data)
 
+	s.Stop()
 }
 
 //Get the key from the specified url

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/gin-gonic/gin"
 	"github.com/mariogmarq/goshare/encryption"
 	"github.com/mariogmarq/goshare/util"
@@ -27,7 +29,9 @@ var sendCmd = &cobra.Command{
 }
 
 func send(cmd *cobra.Command, args []string) {
-	fmt.Println("Encrypting file")
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+	s.Suffix = " Encrypting data..."
+	s.Start()
 	//Generate encryption key
 	k, err := encryption.MakeKey(32)
 	if err != nil {
@@ -45,7 +49,7 @@ func send(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic("Error encrypting file")
 	}
-
+	s.Stop()
 	//Once the file is ready, rise the server
 	randomString = util.CreateRandomString(6)
 	fmt.Printf("Code for share: %s\n", randomString)
@@ -72,7 +76,11 @@ func getSendHttpHandler(filename string) gin.HandlerFunc {
 		if c.Param("code") == randomString {
 			fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
 
-			fmt.Println("Sending " + filename)
+			//Creates spinner
+			s := spinner.New(spinner.CharSets[11], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+			s.Suffix = " Sending data..."
+			s.Start()
+
 			//Establish the file name
 			parsedFilename := strings.Split(filename, "/")
 			//Write header for filename
@@ -81,6 +89,7 @@ func getSendHttpHandler(filename string) gin.HandlerFunc {
 					parsedFilename[len(parsedFilename)-1]))
 			//Write the file
 			c.Writer.Write(encryptedData)
+			s.Stop()
 			fmt.Println("File sent!")
 		}
 	}

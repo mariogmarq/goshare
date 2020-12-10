@@ -48,7 +48,7 @@ var versionCmd = &cobra.Command{
 	Short: "Display version information",
 	Long:  "Software version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("GoShare version 0.1.0")
+		fmt.Println("GoShare version 0.2.0")
 	},
 }
 
