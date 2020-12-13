@@ -32,10 +32,10 @@ func get(cmd *cobra.Command, args []string) {
 	s.Start()
 
 	//Search ip
-	ip, err := util.ScanNetwork(":8080")
+	ip, err := util.ScanNetwork(":49153")
 	if err == nil {
 		s.Stop()
-		ipHttp := "http://" + ip + ":8080/"
+		ipHttp := "http://" + ip + ":49153/"
 		//Get the key of encryption
 		key, err := getKey(ipHttp + "key")
 		if err != nil {

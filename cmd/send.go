@@ -67,7 +67,7 @@ func send(cmd *cobra.Command, args []string) {
 	g.GET("/", pingHandler)
 	g.GET("/stop", stopHandler)
 	g.GET("/key", key(k).keyHandler)
-	g.Run()
+	g.Run(":49153")
 }
 
 //Returns the handler for sending the file, takes name of file has a parameter
