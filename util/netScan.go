@@ -5,14 +5,30 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/jackpal/gateway"
 )
 
 //Search for an ip in your network with the specified port opened
 func ScanNetwork(port string) (string, error) {
 	client := http.Client{Timeout: 10 * time.Millisecond}
 
-	ip, ipnet, err := net.ParseCIDR("192.168.1.0/24")
+	//Get the gateway for your network
+	ipOfGateway, err := gateway.DiscoverGateway()
+	if err != nil {
+		return "", err
+	}
+
+	//Build the ip in a string
+	var ipBuilder strings.Builder
+	gatewayAsString := ipOfGateway.String()
+	for i := 0; i < len(gatewayAsString)-1; i++ {
+		ipBuilder.WriteByte(gatewayAsString[i])
+	}
+
+	ip, ipnet, err := net.ParseCIDR(ipBuilder.String() + "0/24")
 	if err != nil {
 		log.Fatal(err)
 	}
