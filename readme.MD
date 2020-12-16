@@ -11,6 +11,6 @@ day a day workflow.
 
 ### To-Do
 - [x] Minimum work
-- [ ] Capable of send various files
+- [ ] No encryption flag(for less ram usage and slow computers)
 - [ ] Testing
 - [x] Encryption
