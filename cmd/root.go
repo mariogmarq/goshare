@@ -33,7 +33,7 @@ var rootCmd = &cobra.Command{
 	Short: "Share files across the network",
 	Long: `goshare allows you to share files across your local network
 in a safe and easy way. To send files use:
-	goshare share files
+	goshare send files
 	
 To get the files just do:
 	goshare get KEY`,
