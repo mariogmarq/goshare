@@ -63,45 +63,53 @@ func send(cmd *cobra.Command, args []string) {
 	//Create http to listen to port
 	g := gin.New()
 	g.MaxMultipartMemory = 8 << 20 //8MB
-	g.GET("/get/:code", getHandler)
-	g.GET("/", pingHandler)
-	g.GET("/stop", stopHandler)
-	g.GET("/key", key(k).keyHandler)
+	g.GET("/:code/get", getHandler)
+	g.GET("/:code", pingHandler)
+	g.GET("/:code/stop", stopHandler)
+	g.GET("/:code/key", key(k).keyHandler)
 	g.Run(":49153")
 }
 
 //Returns the handler for sending the file, takes name of file has a parameter
 func getSendHttpHandler(filename string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Param("code") == randomString {
-			fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
-
-			//Creates spinner
-			s := spinner.New(spinner.CharSets[11], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
-			s.Suffix = " Sending data..."
-			s.Start()
-
-			//Establish the file name
-			parsedFilename := strings.Split(filename, "/")
-			//Write header for filename
-			c.Writer.Header().Set("content-disposition",
-				fmt.Sprintf("attachment; filename=\"%s\"",
-					parsedFilename[len(parsedFilename)-1]))
-			//Write the file
-			c.Writer.Write(encryptedData)
-			s.Stop()
-			fmt.Println("File sent!")
+		if c.Param("code") != randomString {
+			return
 		}
+		fmt.Printf("Got connection with %s\n", c.Request.RemoteAddr)
+
+		//Creates spinner
+		s := spinner.New(spinner.CharSets[11], 100*time.Millisecond, spinner.WithWriter(os.Stderr))
+		s.Suffix = " Sending data..."
+		s.Start()
+
+		//Establish the file name
+		parsedFilename := strings.Split(filename, "/")
+		//Write header for filename
+		c.Writer.Header().Set("content-disposition",
+			fmt.Sprintf("attachment; filename=\"%s\"",
+				parsedFilename[len(parsedFilename)-1]))
+		//Write the file
+		c.Writer.Write(encryptedData)
+		s.Stop()
+		fmt.Println("File sent!")
 	}
 }
 
 //Root handler just pings
 func pingHandler(c *gin.Context) {
+	if c.Param("code") != randomString {
+		return
+	}
 	c.Header("status", "200")
 }
 
 //Writes the key into the response
 func (k key) keyHandler(c *gin.Context) {
+	if c.Param("code") != randomString {
+		return
+	}
+
 	hexkey := fmt.Sprintf("%x", []byte(k))
 	c.JSON(200, gin.H{
 		"key": hexkey,
@@ -110,5 +118,8 @@ func (k key) keyHandler(c *gin.Context) {
 
 //Stop handler for stop executing
 func stopHandler(c *gin.Context) {
+	if c.Param("code") != randomString {
+		return
+	}
 	os.Exit(0)
 }
