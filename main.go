@@ -15,6 +15,10 @@ func main() {
 				Name:   "send",
 				Usage:  "send a file to other computer",
 				Action: cmd.Send,
+			}, {
+				Name:   "get",
+				Usage:  "get a file from other computer",
+				Action: cmd.Get,
 			},
 		},
 	}
